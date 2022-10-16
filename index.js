@@ -2,9 +2,21 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const request = require("request");
 const cors = require("cors");
+const dotenv = require("dotenv");
 const port = process.env.PORT || 5000;
+const mongoose = require("mongoose");
+//import mpesa schema
+const mpesa = require("./model/mpesa");
+//import phonenumbers
+const phone = require("./model/phoneNumbers");
 //initialize app
 const app = express();
+
+//DB connections
+dotenv.config();
+mongoose.connect(process.env.DB_CONNECT, () => {
+  console.log("connected to the db");
+});
 
 //middleware
 app.use(bodyParser.json());
@@ -29,8 +41,8 @@ app.get("/register", access, (req, res) => {
       json: {
         ShortCode: 600977,
         ResponseType: "Completed",
-        ConfirmationURL: "https://f1cb-41-89-99-5.in.ngrok.io/confirmation",
-        ValidationURL: "https://f1cb-41-89-99-5.in.ngrok.io/validation",
+        ConfirmationURL: "https://62fa-41-89-99-5.in.ngrok.io/confirmation",
+        ValidationURL: "https://62fa-41-89-99-5.in.ngrok.io/validation",
       },
     },
     (error, response, body) => {
@@ -87,8 +99,8 @@ app.get("/balance", access, (req, res) => {
         PartyA: 600991,
         IdentifierType: 4,
         Remarks: "balance ids",
-        QueueTimeOutURL: "https://f1cb-41-89-99-5.in.ngrok.io/timeout_url",
-        ResultURL: "https://f1cb-41-89-99-5.in.ngrok.io/result_url",
+        QueueTimeOutURL: "https://62fa-41-89-99-5.in.ngrok.io/timeout_url",
+        ResultURL: "https://62fa-41-89-99-5.in.ngrok.io/result_url",
       },
     },
     (error, response, body) => {
@@ -99,6 +111,20 @@ app.get("/balance", access, (req, res) => {
       }
     }
   );
+});
+app.post("/phone", async (req, res) => {
+  let { _value } = req.body;
+  const PhoneNumber = new phone({
+    phoneNumbers: _value,
+  });
+  console.log(PhoneNumber);
+  res.send({ message: `${_value} ,created!!` });
+  /*  let tel = {
+    phoneNumb: data,
+  }; */
+  await phone.create(PhoneNumber);
+  /* console.log(tel); */
+  /* return res.send({ message: `${phone.numValue._value} created,` }); */
 });
 app.get("/stk", access, (req, res) => {
   let url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
@@ -120,7 +146,7 @@ app.get("/stk", access, (req, res) => {
         PartyA: 254746032247,
         PartyB: 174379,
         PhoneNumber: 254746032247,
-        CallBackURL: "https://f1cb-41-89-99-5.in.ngrok.io/callback",
+        CallBackURL: "https://62fa-41-89-99-5.in.ngrok.io/callback",
         AccountReference: "CompanyXLTD",
         TransactionDesc: "Payment of X",
       },
@@ -162,29 +188,34 @@ app.post("/result_url", (req, res) => {
   return res.status(200).res.send(req.body);
 });
 
-app.post("/callback", (req, res) => {
+app.post("/callback", async (req, res) => {
   console.log(".......... STK Callback ..................");
-  console.log(JSON.stringify(req.body.Body));
-  let data = JSON.stringify(req.body.Body);
-  return res.send(JSON.stringify(req.body.Body));
+
+  /*   console.log(JSON.stringify(req.body.Body.stkCallback.CallbackMetadata)); */
+  let allData = [];
+  let { Body } = req.body;
+  if (Body === undefined) {
+    setTimeout(async () => {
+      console.log("done!!!");
+    }, 10000);
+  } else {
+    allData.push(Body);
+    await mpesa.create(Body);
+  }
+
+  /*  console.log(Body.stkCallback.MerchantRequestID);
+  console.log(Body.stkCallback.CheckoutRequestID);
+  console.log(Body.stkCallback.ResultCode);
+  console.log(Body.stkCallback.ResultDesc);
+  res.send([
+    `{"MerchantRequestID":${data.MerchantRequestID}, "CheckoutRequestID":${data.MerchantRequestID},"ResultDesc":${data.ResultDesc},}}`,
+  ]); */
+  /* return res.status(200).send(data); */
 });
 app.get("/getRes", async (req, res) => {
-  request(
-    {
-      url: "http://localhost:5000/callback",
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-    },
-    (error, response, body) => {
-      if (error) {
-        console.log(`callback error:${error}`);
-      } else {
-        res.status(200).json(body);
-      }
-    }
-  );
+  let allData = await mpesa.find();
+  console.log(allData);
+  res.send(allData);
 });
 function access(req, res, next) {
   //access token
