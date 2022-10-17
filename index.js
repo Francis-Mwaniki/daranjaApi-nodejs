@@ -11,6 +11,8 @@ const { Types } = require("mongoose");
 const mpesa = require("./model/mpesa");
 //import phonenumbers
 const phone = require("./model/phoneNumbers");
+//functional phoneNumbers
+const functionPhone = require("./model/functionPhone");
 //initialize app
 const app = express();
 
@@ -40,8 +42,8 @@ app.get("/register", access, (req, res) => {
       json: {
         ShortCode: 600977,
         ResponseType: "Completed",
-        ConfirmationURL: "https://599d-41-89-99-5.in.ngrok.io/confirmation",
-        ValidationURL: "https://599d-41-89-99-5.in.ngrok.io/validation",
+        ConfirmationURL: "https://0684-41-89-99-5.in.ngrok.io/confirmation",
+        ValidationURL: "https://0684-41-89-99-5.in.ngrok.io/validation",
       },
     },
     (error, response, body) => {
@@ -98,8 +100,8 @@ app.get("/balance", access, (req, res) => {
         PartyA: 600991,
         IdentifierType: 4,
         Remarks: "balance ids",
-        QueueTimeOutURL: "https://599d-41-89-99-5.in.ngrok.io/timeout_url",
-        ResultURL: "https://599d-41-89-99-5.in.ngrok.io/result_url",
+        QueueTimeOutURL: "https://0684-41-89-99-5.in.ngrok.io/timeout_url",
+        ResultURL: "https://0684-41-89-99-5.in.ngrok.io/result_url",
       },
     },
     (error, response, body) => {
@@ -126,7 +128,12 @@ app.post("/phone", async (req, res) => {
     });
     /*  console.log(phoneNumber); */
     const existingId = await phone.findById(id);
-    console.log(existingId);
+    let functionalValue = new functionPhone({
+      _id: existingId._id,
+      phoneNumber: existingId.phoneNumbers,
+      amount: existingId.amount,
+    });
+    let functionalId = await functionPhone.create(functionalValue);
   }, 10000);
 });
 
@@ -140,9 +147,15 @@ app.get("/", async (req, res) => {
     console.log(user_id);
   });
 });
-app.get("/stk", access, (req, res) => {
+app.get("/stk", access, async (req, res) => {
   let url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
   let auth = "Bearer " + req.access_token;
+  let accessPhone = await functionPhone.findOne({
+    phoneNumber: "746032247",
+  });
+  let accessAmount = await functionPhone.findOne({
+    amount: "1",
+  });
   request(
     {
       url: url,
@@ -157,10 +170,10 @@ app.get("/stk", access, (req, res) => {
         Timestamp: "20221013135726",
         TransactionType: "CustomerPayBillOnline",
         Amount: 1,
-        PartyA: 254746032247,
+        PartyA: `254${accessPhone}`,
         PartyB: 174379,
         PhoneNumber: 254746032247,
-        CallBackURL: "https://599d-41-89-99-5.in.ngrok.io/callback",
+        CallBackURL: "https://0684-41-89-99-5.in.ngrok.io/callback",
         AccountReference: "CompanyXLTD",
         TransactionDesc: "Payment of X",
       },
@@ -228,7 +241,6 @@ app.post("/callback", async (req, res) => {
 });
 app.get("/getRes", async (req, res) => {
   let allData = await mpesa.find();
-  console.log(allData);
   res.send(allData);
 });
 function access(req, res, next) {
