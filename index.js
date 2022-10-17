@@ -5,6 +5,8 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const port = process.env.PORT || 5000;
 const mongoose = require("mongoose");
+const { ObjectId } = require("mongodb");
+const { Types } = require("mongoose");
 //import mpesa schema
 const mpesa = require("./model/mpesa");
 //import phonenumbers
@@ -21,9 +23,6 @@ mongoose.connect(process.env.DB_CONNECT, () => {
 //middleware
 app.use(bodyParser.json());
 app.use(cors());
-app.get("/", (req, res) => {
-  res.send("home page");
-});
 
 app.get("/access_token", access, (req, res) => {
   res.status(200).json({ access_token: req.access_token });
@@ -41,8 +40,8 @@ app.get("/register", access, (req, res) => {
       json: {
         ShortCode: 600977,
         ResponseType: "Completed",
-        ConfirmationURL: "https://62fa-41-89-99-5.in.ngrok.io/confirmation",
-        ValidationURL: "https://62fa-41-89-99-5.in.ngrok.io/validation",
+        ConfirmationURL: "https://599d-41-89-99-5.in.ngrok.io/confirmation",
+        ValidationURL: "https://599d-41-89-99-5.in.ngrok.io/validation",
       },
     },
     (error, response, body) => {
@@ -99,8 +98,8 @@ app.get("/balance", access, (req, res) => {
         PartyA: 600991,
         IdentifierType: 4,
         Remarks: "balance ids",
-        QueueTimeOutURL: "https://62fa-41-89-99-5.in.ngrok.io/timeout_url",
-        ResultURL: "https://62fa-41-89-99-5.in.ngrok.io/result_url",
+        QueueTimeOutURL: "https://599d-41-89-99-5.in.ngrok.io/timeout_url",
+        ResultURL: "https://599d-41-89-99-5.in.ngrok.io/result_url",
       },
     },
     (error, response, body) => {
@@ -113,18 +112,36 @@ app.get("/balance", access, (req, res) => {
   );
 });
 app.post("/phone", async (req, res) => {
-  let { _value } = req.body;
-  const PhoneNumber = new phone({
-    phoneNumbers: _value,
+  let { numValue, amtValue } = req.body;
+  console.log(numValue._value, amtValue._value);
+  const phoneAndAmount = new phone({
+    phoneNumbers: numValue._value,
+    amount: amtValue._value,
   });
-  console.log(PhoneNumber);
-  res.send({ message: `${_value} ,created!!` });
-  /*  let tel = {
-    phoneNumb: data,
-  }; */
-  await phone.create(PhoneNumber);
-  /* console.log(tel); */
-  /* return res.send({ message: `${phone.numValue._value} created,` }); */
+  res.send({ message: `created!!` });
+  let id = phoneAndAmount._id;
+
+  await phone.create(phoneAndAmount);
+  //find corresponding ids
+  let Db_data = phone.find();
+  let singleData = (await Db_data).forEach((user_id) => {
+    console.log({ newId: new ObjectId(user_id._id) });
+    /*   if (user_id._id === id) {
+      console.log(user_id, id);
+    } else {
+      console.log("sorry");
+    } */
+  });
+});
+app.get("/", async (req, res) => {
+  let Db_data = phone.find();
+  let single_data = (await Db_data).filter((user_id) => {
+    user_id !==
+      phone.$where({
+        _id: mongoose.Types.ObjectId("634cef043f0a1e844a78b68e"),
+      });
+    console.log(user_id);
+  });
 });
 app.get("/stk", access, (req, res) => {
   let url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
@@ -146,7 +163,7 @@ app.get("/stk", access, (req, res) => {
         PartyA: 254746032247,
         PartyB: 174379,
         PhoneNumber: 254746032247,
-        CallBackURL: "https://62fa-41-89-99-5.in.ngrok.io/callback",
+        CallBackURL: "https://599d-41-89-99-5.in.ngrok.io/callback",
         AccountReference: "CompanyXLTD",
         TransactionDesc: "Payment of X",
       },

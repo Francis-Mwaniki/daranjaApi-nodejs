@@ -4,6 +4,12 @@ const phoneSchema = new mongoose.Schema({
   phoneNumbers: {
     type: String,
     required: true,
+    min: 7,
+  },
+  amount: {
+    type: String,
+    required: true,
+    min: 0,
   },
 
   Date: {
