@@ -111,28 +111,25 @@ app.get("/balance", access, (req, res) => {
     }
   );
 });
-app.post("/phone", existingPhone, async (req, res) => {
+app.post("/phone", async (req, res) => {
   let { numValue, amtValue } = req.body;
-
   const phoneAndAmount = new phone({
     phoneNumbers: numValue._value,
     amount: amtValue._value,
   });
-  let id = phoneAndAmount._id;
   res.send({ message: `created!!` });
+  let id = phoneAndAmount._id;
   setTimeout(async () => {
     await phone.create(phoneAndAmount);
     const phoneNumber = await phone.find({
       phoneNumbers: req.body.numValue._value,
     });
     /*  console.log(phoneNumber); */
+    const existingId = await phone.findById(id);
+    console.log(existingId);
   }, 10000);
 });
-async function existingPhone(req, res) {
-  let id = phoneAndAmount._id;
-  const existingId = await phone.findById(id);
-  console.log(existingId);
-}
+
 app.get("/", async (req, res) => {
   let Db_data = phone.find();
   let single_data = (await Db_data).filter((user_id) => {
