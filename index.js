@@ -149,47 +149,53 @@ app.post("/stk", access, async (req, res) => {
   let url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
   let auth = "Bearer " + req.access_token;
   let { numValue, amtValue } = req.body;
-  if (numValue._value == "" && amtValue._value == "") {
-    res.send({ message: "Invalid credential" });
-  } else {
-    const phoneAndAmount = new phone({
-      phoneNumbers: numValue._value,
-      amount: amtValue._value,
-    });
-    console.log(phoneAndAmount.phoneNumbers);
-    console.log(phoneAndAmount.amount);
-    await phone.create(phoneAndAmount);
-    request(
-      {
-        url: url,
-        method: "POST",
-        headers: {
-          Authorization: auth,
+  let notnumValue = numValue._value === null;
+  let notamtValue = amtValue._value === null;
+  try {
+    if (notnumValue && notamtValue) {
+      return res.status(400).send({ message: "must not be empty or invalid" });
+    } else {
+      const phoneAndAmount = new phone({
+        phoneNumbers: numValue._value,
+        amount: amtValue._value,
+      });
+      console.log(phoneAndAmount.phoneNumbers);
+      console.log(phoneAndAmount.amount);
+      await phone.create(phoneAndAmount);
+      request(
+        {
+          url: url,
+          method: "POST",
+          headers: {
+            Authorization: auth,
+          },
+          json: {
+            BusinessShortCode: 174379,
+            Password:
+              "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjIxMDEzMTM1NzI2",
+            Timestamp: "20221013135726",
+            TransactionType: "CustomerPayBillOnline",
+            Amount: `${phoneAndAmount.amount}`,
+            PartyA: `254${phoneAndAmount.phoneNumbers}`,
+            PartyB: 174379,
+            PhoneNumber: `254${phoneAndAmount.phoneNumbers}`,
+            CallBackURL: "https://26ac-105-161-205-2.eu.ngrok.io/callback",
+            AccountReference: "CompanyXLTD",
+            TransactionDesc: "Payment of X",
+          },
         },
-        json: {
-          BusinessShortCode: 174379,
-          Password:
-            "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjIxMDEzMTM1NzI2",
-          Timestamp: "20221013135726",
-          TransactionType: "CustomerPayBillOnline",
-          Amount: `${phoneAndAmount.amount}`,
-          PartyA: `254${phoneAndAmount.phoneNumbers}`,
-          PartyB: 174379,
-          PhoneNumber: `254${phoneAndAmount.phoneNumbers}`,
-          CallBackURL: "https://26ac-105-161-205-2.eu.ngrok.io/callback",
-          AccountReference: "CompanyXLTD",
-          TransactionDesc: "Payment of X",
-        },
-      },
-      (error, response, body) => {
-        if (error) {
-          res.send({ message: "error" });
-        } else {
-          res.status(200).json(body);
-          console.log(body);
+        (error, response, body) => {
+          if (error) {
+            res.send({ message: "error" });
+          } else {
+            res.status(200).json(body);
+            console.log(body);
+          }
         }
-      }
-    );
+      );
+    }
+  } catch (error) {
+    res.send(error);
   }
 });
 app.post("/confirmation", (req, res) => {
