@@ -5,8 +5,6 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const port = process.env.PORT || 5000;
 const mongoose = require("mongoose");
-const { ObjectId } = require("mongodb");
-const { Types } = require("mongoose");
 //import mpesa schema
 const mpesa = require("./model/mpesa");
 //import phonenumbers
@@ -42,8 +40,8 @@ app.get("/register", access, (req, res) => {
       json: {
         ShortCode: 600977,
         ResponseType: "Completed",
-        ConfirmationURL: "https://0684-41-89-99-5.in.ngrok.io/confirmation",
-        ValidationURL: "https://0684-41-89-99-5.in.ngrok.io/validation",
+        ConfirmationURL: "https://26ac-105-161-205-2.eu.ngrok.io/confirmation",
+        ValidationURL: "https://26ac-105-161-205-2.eu.ngrok.io/validation",
       },
     },
     (error, response, body) => {
@@ -100,8 +98,8 @@ app.get("/balance", access, (req, res) => {
         PartyA: 600991,
         IdentifierType: 4,
         Remarks: "balance ids",
-        QueueTimeOutURL: "https://0684-41-89-99-5.in.ngrok.io/timeout_url",
-        ResultURL: "https://0684-41-89-99-5.in.ngrok.io/result_url",
+        QueueTimeOutURL: "https://26ac-105-161-205-2.eu.ngrok.io/timeout_url",
+        ResultURL: "https://26ac-105-161-205-2.eu.ngrok.io/result_url",
       },
     },
     (error, response, body) => {
@@ -121,12 +119,12 @@ app.post("/phone", async (req, res) => {
   });
   res.send({ message: `created!!` });
   let id = phoneAndAmount._id;
-  setTimeout(async () => {
+  /* setTimeout(async () => {
     await phone.create(phoneAndAmount);
     const phoneNumber = await phone.find({
       phoneNumbers: req.body.numValue._value,
     });
-    /*  console.log(phoneNumber); */
+    /  console.log(phoneNumber); 
     const existingId = await phone.findById(id);
     let functionalValue = new functionPhone({
       _id: existingId._id,
@@ -134,10 +132,10 @@ app.post("/phone", async (req, res) => {
       amount: existingId.amount,
     });
     let functionalId = await functionPhone.create(functionalValue);
-  }, 10000);
+  }, 10000); */
 });
 
-app.get("/", async (req, res) => {
+/* app.get("/", async (req, res) => {
   let Db_data = phone.find();
   let single_data = (await Db_data).filter((user_id) => {
     user_id !==
@@ -146,46 +144,53 @@ app.get("/", async (req, res) => {
       });
     console.log(user_id);
   });
-});
-app.get("/stk", access, async (req, res) => {
+}); */
+app.post("/stk", access, async (req, res) => {
   let url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
   let auth = "Bearer " + req.access_token;
-  let accessPhone = await functionPhone.findOne({
-    phoneNumber: "746032247",
-  });
-  let accessAmount = await functionPhone.findOne({
-    amount: "1",
-  });
-  request(
-    {
-      url: url,
-      method: "POST",
-      headers: {
-        Authorization: auth,
+  let { numValue, amtValue } = req.body;
+  if (numValue._value == "" && amtValue._value == "") {
+    res.send({ message: "Invalid credential" });
+  } else {
+    const phoneAndAmount = new phone({
+      phoneNumbers: numValue._value,
+      amount: amtValue._value,
+    });
+    console.log(phoneAndAmount.phoneNumbers);
+    console.log(phoneAndAmount.amount);
+    await phone.create(phoneAndAmount);
+    request(
+      {
+        url: url,
+        method: "POST",
+        headers: {
+          Authorization: auth,
+        },
+        json: {
+          BusinessShortCode: 174379,
+          Password:
+            "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjIxMDEzMTM1NzI2",
+          Timestamp: "20221013135726",
+          TransactionType: "CustomerPayBillOnline",
+          Amount: `${phoneAndAmount.amount}`,
+          PartyA: `254${phoneAndAmount.phoneNumbers}`,
+          PartyB: 174379,
+          PhoneNumber: `254${phoneAndAmount.phoneNumbers}`,
+          CallBackURL: "https://26ac-105-161-205-2.eu.ngrok.io/callback",
+          AccountReference: "CompanyXLTD",
+          TransactionDesc: "Payment of X",
+        },
       },
-      json: {
-        BusinessShortCode: 174379,
-        Password:
-          "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjIxMDEzMTM1NzI2",
-        Timestamp: "20221013135726",
-        TransactionType: "CustomerPayBillOnline",
-        Amount: 1,
-        PartyA: `254${accessPhone}`,
-        PartyB: 174379,
-        PhoneNumber: 254746032247,
-        CallBackURL: "https://0684-41-89-99-5.in.ngrok.io/callback",
-        AccountReference: "CompanyXLTD",
-        TransactionDesc: "Payment of X",
-      },
-    },
-    (error, response, body) => {
-      if (error) {
-        console.log(error);
-      } else {
-        res.status(200).json(body);
+      (error, response, body) => {
+        if (error) {
+          res.send({ message: "error" });
+        } else {
+          res.status(200).json(body);
+          console.log(body);
+        }
       }
-    }
-  );
+    );
+  }
 });
 app.post("/confirmation", (req, res) => {
   console.log("....................... confirmation .............");
@@ -218,7 +223,7 @@ app.post("/result_url", (req, res) => {
 app.post("/callback", async (req, res) => {
   console.log(".......... STK Callback ..................");
 
-  /*   console.log(JSON.stringify(req.body.Body.stkCallback.CallbackMetadata)); */
+  console.log(JSON.stringify(req.body.Body));
   let allData = [];
   let { Body } = req.body;
   if (Body === undefined) {
