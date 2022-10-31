@@ -40,8 +40,8 @@ app.get("/register", access, (req, res) => {
       json: {
         ShortCode: 600977,
         ResponseType: "Completed",
-        ConfirmationURL: "https://26ac-105-161-205-2.eu.ngrok.io/confirmation",
-        ValidationURL: "https://26ac-105-161-205-2.eu.ngrok.io/validation",
+        ConfirmationURL: "https://cfa7-41-89-99-5.in.ngrok.io/confirmation",
+        ValidationURL: "https://cfa7-41-89-99-5.in.ngrok.io/validation",
       },
     },
     (error, response, body) => {
@@ -98,8 +98,8 @@ app.get("/balance", access, (req, res) => {
         PartyA: 600991,
         IdentifierType: 4,
         Remarks: "balance ids",
-        QueueTimeOutURL: "https://26ac-105-161-205-2.eu.ngrok.io/timeout_url",
-        ResultURL: "https://26ac-105-161-205-2.eu.ngrok.io/result_url",
+        QueueTimeOutURL: "https://cfa7-41-89-99-5.in.ngrok.io/timeout_url",
+        ResultURL: "https://cfa7-41-89-99-5.in.ngrok.io/result_url",
       },
     },
     (error, response, body) => {
@@ -179,7 +179,7 @@ app.post("/stk", access, async (req, res) => {
             PartyA: `254${phoneAndAmount.phoneNumbers}`,
             PartyB: 174379,
             PhoneNumber: `254${phoneAndAmount.phoneNumbers}`,
-            CallBackURL: "https://26ac-105-161-205-2.eu.ngrok.io/callback",
+            CallBackURL: "https://cfa7-41-89-99-5.in.ngrok.io/callback",
             AccountReference: "CompanyXLTD",
             TransactionDesc: "Payment of X",
           },
